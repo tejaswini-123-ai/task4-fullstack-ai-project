@@ -38,8 +38,8 @@ function App() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: email,
-            password: password,
+            email,
+            password,
           }),
         }
       );
@@ -47,17 +47,16 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-  // Save logged-in user information
-  localStorage.setItem("userId", data.id);
-  localStorage.setItem("username", data.username);
-  localStorage.setItem("email", data.email);
+        localStorage.setItem("userId", data.id);
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("email", data.email);
 
-  setMessage(`Login successful! Welcome, ${data.username}.`);
+        setMessage(`Login successful! Welcome, ${data.username}.`);
 
-  setTimeout(() => {
-    window.location.href = "/dashboard";
-  }, 1000);
-}else {
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 800);
+      } else {
         setMessage(data.detail || "Invalid email or password.");
       }
     } catch (error) {
@@ -90,9 +89,9 @@ function App() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            username: username,
-            email: email,
-            password: password,
+            username,
+            email,
+            password,
           }),
         }
       );
@@ -100,9 +99,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(
-          "Account created successfully! You can now sign in."
-        );
+        setMessage("Account created successfully! Please sign in.");
 
         setUsername("");
         setPassword("");
@@ -123,17 +120,7 @@ function App() {
     }
   };
 
-  // DEMO
-  const handleDemo = () => {
-    setEmail("demo@example.com");
-    setPassword("demo123");
-    setMessage("Demo account details filled.");
-  };
-
-  // SWITCH TO SIGNUP
-  const switchToSignup = (e) => {
-    e.preventDefault();
-
+  const switchToSignup = () => {
     setIsSignup(true);
     setMessage("");
     setUsername("");
@@ -141,10 +128,7 @@ function App() {
     setPassword("");
   };
 
-  // SWITCH TO LOGIN
-  const switchToLogin = (e) => {
-    e.preventDefault();
-
+  const switchToLogin = () => {
     setIsSignup(false);
     setMessage("");
     setUsername("");
@@ -153,226 +137,131 @@ function App() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-content">
+          <div className="auth-logo">IH</div>
 
-        {/* LEFT BRANDING SECTION */}
-        <div className="login-brand">
+          <h1>{isSignup ? "Create Account" : "Welcome Back"}</h1>
 
-          <div className="brand-logo">
-            IH
-          </div>
-
-          <h1>
-            Build. Manage.
-            <br />
-            Grow.
-          </h1>
-
-          <p>
-            A smart workspace designed to help teams organize
-            projects, manage tasks, and stay productive.
+          <p className="auth-subtitle">
+            {isSignup
+              ? "Create your account and start managing your projects."
+              : "Sign in to continue to your workspace."}
           </p>
 
-          <div className="feature-list">
-            <div>
-              <span>✓</span>
-              Organize projects effortlessly
-            </div>
-
-            <div>
-              <span>✓</span>
-              Track tasks in one place
-            </div>
-
-            <div>
-              <span>✓</span>
-              Stay focused and productive
-            </div>
-          </div>
-
-        </div>
-
-        {/* RIGHT SECTION */}
-        <div className="login-card">
-
-          <div className="login-header">
-
-            <div className="welcome">
-              {isSignup ? "CREATE ACCOUNT" : "WELCOME BACK"}
-            </div>
-
-            <h2>
-              {isSignup
-                ? "Create your workspace account"
-                : "Sign in to your workspace"}
-            </h2>
-
-            <p className="subtitle">
-              {isSignup
-                ? "Enter your details to get started."
-                : "Enter your details to continue."}
-            </p>
-
-          </div>
-
-          {/* SIGNUP FORM */}
           {isSignup ? (
-
             <form onSubmit={handleRegister}>
-
-              <div className="input-group">
+              <div className="auth-input-group">
                 <label>Username</label>
-
                 <input
                   type="text"
-                  placeholder="Choose a username"
+                  placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  required
                 />
               </div>
 
-              <div className="input-group">
-                <label>Email address</label>
-
+              <div className="auth-input-group">
+                <label>Email</label>
                 <input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
 
-              <div className="input-group">
+              <div className="auth-input-group">
                 <label>Password</label>
-
                 <input
                   type="password"
                   placeholder="Create a password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
 
               <button
                 type="submit"
-                className="login-button"
+                className="auth-button"
                 disabled={loading}
               >
-                {loading
-                  ? "Creating Account..."
-                  : "Create Account"}
+                {loading ? "Creating Account..." : "Create Account"}
               </button>
-
             </form>
-
           ) : (
-
-            /* LOGIN FORM */
             <form onSubmit={handleLogin}>
-
-              <div className="input-group">
-                <label>Email address</label>
-
+              <div className="auth-input-group">
+                <label>Email</label>
                 <input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
 
-              <div className="input-group">
-
-                <div className="password-label">
-                  <label>Password</label>
-
-                  <a href="#forgot">
-                    Forgot password?
-                  </a>
-                </div>
-
+              <div className="auth-input-group">
+                <label>Password</label>
                 <input
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
-
               </div>
 
               <button
                 type="submit"
-                className="login-button"
+                className="auth-button"
                 disabled={loading}
               >
                 {loading ? "Signing In..." : "Sign In"}
-                {!loading && <span>→</span>}
               </button>
-
             </form>
           )}
 
-          {/* MESSAGE */}
           {message && (
-            <div className="login-message">
+            <div
+              className={`auth-message ${
+                message.toLowerCase().includes("success")
+                  ? "success"
+                  : "error"
+              }`}
+            >
               {message}
             </div>
           )}
 
-          {/* DEMO */}
-          {!isSignup && (
-            <>
-              <div className="divider">
-                <span>or</span>
-              </div>
-
-              <button
-                className="demo-button"
-                onClick={handleDemo}
-                type="button"
-              >
-                Continue with Demo
-              </button>
-            </>
-          )}
-
-          {/* SWITCH LOGIN / SIGNUP */}
-          <p className="signup-text">
-
+          <p className="auth-switch">
             {isSignup ? (
               <>
                 Already have an account?{" "}
-
-                <a
-                  href="#login"
-                  onClick={switchToLogin}
-                >
-                  Sign in
-                </a>
+                <button type="button" onClick={switchToLogin}>
+                  Sign In
+                </button>
               </>
             ) : (
               <>
-                New to the workspace?{" "}
-
-                <a
-                  href="#signup"
-                  onClick={switchToSignup}
-                >
-                  Create an account
-                </a>
+                Don't have an account?{" "}
+                <button type="button" onClick={switchToSignup}>
+                  Create Account
+                </button>
               </>
             )}
-
           </p>
-
         </div>
       </div>
 
-      <div className="footer-text">
+      <p className="auth-footer">
         © 2026 Innovation Workspace
-      </div>
-
+      </p>
     </div>
   );
 }

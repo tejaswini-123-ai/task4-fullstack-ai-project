@@ -1,108 +1,65 @@
 import { useEffect, useState } from "react";
-import "../App.css";
+import "./Dashboard.css";
+import logo from "../assets/df.png";
 
 function Dashboard() {
-  // PROJECT STATES
+  const [activePage, setActivePage] = useState("Dashboard");
+
   const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [showForm, setShowForm] = useState(false);
+  const [showProjectForm, setShowProjectForm] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
-  const [creating, setCreating] = useState(false);
 
-  const [editingProject, setEditingProject] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [updating, setUpdating] = useState(false);
-
-  const [deletingId, setDeletingId] = useState(null);
-
-  // TASK STATES
-  const [tasks, setTasks] = useState([]);
-  const [taskLoading, setTaskLoading] = useState(true);
-  const [taskError, setTaskError] = useState("");
-
-  const [showTaskForm, setShowTaskForm] = useState(null);
+  const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskStatus, setTaskStatus] = useState("pending");
-  const [creatingTask, setCreatingTask] = useState(false);
-
-  const [editingTask, setEditingTask] = useState(null);
-  const [editTaskTitle, setEditTaskTitle] = useState("");
-  const [editTaskDescription, setEditTaskDescription] = useState("");
-  const [editTaskStatus, setEditTaskStatus] = useState("pending");
-  const [updatingTask, setUpdatingTask] = useState(false);
-
-  const [deletingTaskId, setDeletingTaskId] = useState(null);
-
-  // AI PRIORITY
-  const [taskPriorities, setTaskPriorities] = useState({});
+  const [selectedProject, setSelectedProject] = useState("");
 
   const userId = localStorage.getItem("userId");
-  const username = localStorage.getItem("username");
+  const username = localStorage.getItem("username") || "User";
 
-  // LOAD DATA
   useEffect(() => {
-    fetchProjects();
-    fetchTasks();
+    loadData();
   }, []);
 
-  // FETCH PROJECTS
-  const fetchProjects = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
+      const projectResponse = await fetch(
         "http://127.0.0.1:8000/projects/"
       );
 
-      const data = await response.json();
+      const taskResponse = await fetch(
+        "http://127.0.0.1:8000/tasks/"
+      );
 
-      if (response.ok) {
-        setProjects(data);
-      } else {
-        setError("Unable to load projects.");
+      const projectData = await projectResponse.json();
+      const taskData = await taskResponse.json();
+
+      if (projectResponse.ok) {
+        setProjects(projectData);
       }
-    } catch (err) {
+
+      if (taskResponse.ok) {
+        setTasks(taskData);
+      }
+    } catch {
       setError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
+        "Unable to connect to FastAPI. Please make sure the backend is running."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // FETCH TASKS
-  const fetchTasks = async () => {
-    try {
-      setTaskLoading(true);
-      setTaskError("");
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/tasks/"
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setTasks(data);
-      } else {
-        setTaskError("Unable to load tasks.");
-      }
-    } catch (err) {
-      setTaskError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setTaskLoading(false);
-    }
-  };
-
-  // CREATE PROJECT
   const handleCreateProject = async (e) => {
     e.preventDefault();
 
@@ -111,15 +68,7 @@ function Dashboard() {
       return;
     }
 
-    if (!userId) {
-      setError("User not found. Please log in again.");
-      return;
-    }
-
     try {
-      setCreating(true);
-      setError("");
-
       const response = await fetch(
         "http://127.0.0.1:8000/projects/",
         {
@@ -144,132 +93,45 @@ function Dashboard() {
 
       setProjectName("");
       setProjectDescription("");
-      setShowForm(false);
-
-      await fetchProjects();
-    } catch (err) {
-      setError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  // START EDITING PROJECT
-  const startEditingProject = (project) => {
-    setEditingProject(project);
-    setEditName(project.name);
-    setEditDescription(project.description || "");
-    setShowForm(false);
-    setError("");
-  };
-
-  // UPDATE PROJECT
-  const handleUpdateProject = async (e) => {
-    e.preventDefault();
-
-    if (!editName.trim()) {
-      setError("Please enter a project name.");
-      return;
-    }
-
-    if (!editingProject) {
-      return;
-    }
-
-    try {
-      setUpdating(true);
+      setShowProjectForm(false);
       setError("");
 
-      const response = await fetch(
-        `http://127.0.0.1:8000/projects/${editingProject.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editName,
-            description: editDescription,
-            owner_id: editingProject.owner_id,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.detail || "Unable to update project.");
-        return;
-      }
-
-      setEditingProject(null);
-      setEditName("");
-      setEditDescription("");
-
-      await fetchProjects();
-    } catch (err) {
-      setError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setUpdating(false);
+      loadData();
+    } catch {
+      setError("Unable to create project.");
     }
   };
 
-  // DELETE PROJECT
   const handleDeleteProject = async (projectId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this project?"
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
-      setDeletingId(projectId);
-      setError("");
-
-      const response = await fetch(
+      await fetch(
         `http://127.0.0.1:8000/projects/${projectId}`,
         {
           method: "DELETE",
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.detail || "Unable to delete project.");
-        return;
-      }
-
-      await fetchProjects();
-      await fetchTasks();
-    } catch (err) {
-      setError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setDeletingId(null);
+      loadData();
+    } catch {
+      setError("Unable to delete project.");
     }
   };
 
-  // CREATE TASK
-  const handleCreateTask = async (e, projectId) => {
+  const handleCreateTask = async (e) => {
     e.preventDefault();
 
-    if (!taskTitle.trim()) {
-      setTaskError("Please enter a task title.");
+    if (!taskTitle.trim() || !selectedProject) {
+      setError("Please enter task details.");
       return;
     }
 
     try {
-      setCreatingTask(true);
-      setTaskError("");
-
       const response = await fetch(
         "http://127.0.0.1:8000/tasks/",
         {
@@ -281,7 +143,7 @@ function Dashboard() {
             title: taskTitle,
             description: taskDescription,
             status: taskStatus,
-            project_id: projectId,
+            project_id: Number(selectedProject),
           }),
         }
       );
@@ -289,161 +151,44 @@ function Dashboard() {
       const data = await response.json();
 
       if (!response.ok) {
-        setTaskError(data.detail || "Unable to create task.");
+        setError(data.detail || "Unable to create task.");
         return;
       }
 
       setTaskTitle("");
       setTaskDescription("");
       setTaskStatus("pending");
-      setShowTaskForm(null);
+      setSelectedProject("");
+      setShowTaskForm(false);
+      setError("");
 
-      await fetchTasks();
-    } catch (err) {
-      setTaskError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setCreatingTask(false);
+      loadData();
+    } catch {
+      setError("Unable to create task.");
     }
   };
 
-  // START EDITING TASK
-  const startEditingTask = (task) => {
-    setEditingTask(task);
-    setEditTaskTitle(task.title);
-    setEditTaskDescription(task.description || "");
-    setEditTaskStatus(task.status);
-    setTaskError("");
-  };
-
-  // UPDATE TASK
-  const handleUpdateTask = async (e) => {
-    e.preventDefault();
-
-    if (!editTaskTitle.trim()) {
-      setTaskError("Please enter a task title.");
-      return;
-    }
-
-    if (!editingTask) {
-      return;
-    }
-
-    try {
-      setUpdatingTask(true);
-      setTaskError("");
-
-      const response = await fetch(
-        `http://127.0.0.1:8000/tasks/${editingTask.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: editTaskTitle,
-            description: editTaskDescription,
-            status: editTaskStatus,
-            project_id: editingTask.project_id,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setTaskError(data.detail || "Unable to update task.");
-        return;
-      }
-
-      setEditingTask(null);
-
-      await fetchTasks();
-    } catch (err) {
-      setTaskError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setUpdatingTask(false);
-    }
-  };
-
-  // DELETE TASK
   const handleDeleteTask = async (taskId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this task?"
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
-      setDeletingTaskId(taskId);
-      setTaskError("");
-
-      const response = await fetch(
+      await fetch(
         `http://127.0.0.1:8000/tasks/${taskId}`,
         {
           method: "DELETE",
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setTaskError(data.detail || "Unable to delete task.");
-        return;
-      }
-
-      await fetchTasks();
-    } catch (err) {
-      setTaskError(
-        "Unable to connect to the backend. Please make sure FastAPI is running."
-      );
-    } finally {
-      setDeletingTaskId(null);
+      loadData();
+    } catch {
+      setError("Unable to delete task.");
     }
   };
 
-  // AI PRIORITY SUGGESTION
-  const handleSuggestPriority = async (task) => {
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/ai/suggest-priority",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: task.title,
-            description: task.description || "",
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setTaskPriorities((previous) => ({
-          ...previous,
-          [task.id]: data.suggested_priority,
-        }));
-      } else {
-        setTaskError(
-          data.detail || "Unable to get AI priority."
-        );
-      }
-    } catch (err) {
-      setTaskError(
-        "Unable to connect to the AI backend."
-      );
-    }
-  };
-
-  // LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
@@ -452,527 +197,811 @@ function Dashboard() {
     window.location.href = "/";
   };
 
-  return (
-    <div className="dashboard-page">
+  const completedTasks = tasks.filter(
+    (task) => task.status === "done"
+  );
 
-      <header className="dashboard-header">
-        <div className="dashboard-logo">
-          IH
-        </div>
+  const progressTasks = tasks.filter(
+    (task) => task.status === "in-progress"
+  );
 
-        <div className="dashboard-title">
-          <h1>My Workspace</h1>
+  const pendingTasks = tasks.filter(
+    (task) => task.status === "pending"
+  );
 
-          <p>
-            Welcome back{username ? `, ${username}` : ""}! Manage your projects and tasks.
-          </p>
-        </div>
+  const getPageContent = () => {
+    // ================= DASHBOARD =================
 
-        <button
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </header>
+    if (activePage === "Dashboard") {
+      return (
+        <>
+          <div className="page-heading">
+            <div>
+              <h1>Dashboard</h1>
 
-      <main className="dashboard-content">
-
-        <div className="dashboard-top">
-          <div>
-            <h2>Projects</h2>
-            <p>Manage and organize your projects.</p>
-          </div>
-
-          <div className="dashboard-actions">
-            <div className="project-count">
-              {projects.length} Projects
-            </div>
-
-            <button
-              className="create-project-button"
-              onClick={() => {
-                setShowForm(!showForm);
-                setEditingProject(null);
-                setError("");
-              }}
-            >
-              {showForm ? "Cancel" : "+ New Project"}
-            </button>
-          </div>
-        </div>
-
-        {showForm && (
-          <form
-            className="project-form"
-            onSubmit={handleCreateProject}
-          >
-            <h3>Create New Project</h3>
-
-            <input
-              type="text"
-              placeholder="Project name"
-              value={projectName}
-              onChange={(e) =>
-                setProjectName(e.target.value)
-              }
-            />
-
-            <textarea
-              placeholder="Project description (optional)"
-              value={projectDescription}
-              onChange={(e) =>
-                setProjectDescription(e.target.value)
-              }
-            />
-
-            <button
-              type="submit"
-              className="save-project-button"
-              disabled={creating}
-            >
-              {creating
-                ? "Creating..."
-                : "Create Project"}
-            </button>
-          </form>
-        )}
-
-        {editingProject && (
-          <form
-            className="project-form"
-            onSubmit={handleUpdateProject}
-          >
-            <h3>Edit Project</h3>
-
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) =>
-                setEditName(e.target.value)
-              }
-            />
-
-            <textarea
-              value={editDescription}
-              onChange={(e) =>
-                setEditDescription(e.target.value)
-              }
-            />
-
-            <div className="form-actions">
-              <button
-                type="submit"
-                className="save-project-button"
-                disabled={updating}
-              >
-                {updating
-                  ? "Updating..."
-                  : "Save Changes"}
-              </button>
-
-              <button
-                type="button"
-                className="cancel-project-button"
-                onClick={() =>
-                  setEditingProject(null)
-                }
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-
-        {loading && (
-          <div className="dashboard-state">
-            Loading projects...
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="dashboard-error">
-            {error}
-          </div>
-        )}
-
-        {!loading &&
-          !error &&
-          projects.length === 0 && (
-            <div className="dashboard-state">
-              <h3>No projects yet</h3>
               <p>
-                Create your first project to start organizing your work.
+                Welcome back, {username}! Here's your workspace overview.
               </p>
             </div>
+
+            <div className="notification">
+              🔔
+            </div>
+          </div>
+
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">📁</div>
+
+              <div>
+                <p>Total Projects</p>
+                <h2>{projects.length}</h2>
+                <span>Active workspace projects</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">✓</div>
+
+              <div>
+                <p>Completed Tasks</p>
+                <h2>{completedTasks.length}</h2>
+                <span>Tasks completed</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">⏳</div>
+
+              <div>
+                <p>In Progress</p>
+                <h2>{progressTasks.length}</h2>
+                <span>Currently active</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">📌</div>
+
+              <div>
+                <p>Pending Tasks</p>
+                <h2>{pendingTasks.length}</h2>
+                <span>Waiting to start</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="dashboard-panels">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h2>Recent Projects</h2>
+
+                  <p>
+                    Your latest projects and task progress.
+                  </p>
+                </div>
+
+                <button
+                  className="text-button"
+                  onClick={() => setActivePage("Projects")}
+                >
+                  View Projects →
+                </button>
+              </div>
+
+              {projects.length === 0 ? (
+                <div className="empty-state">
+                  No projects yet.
+                </div>
+              ) : (
+                projects.slice(0, 5).map((project) => {
+                  const projectTaskCount = tasks.filter(
+                    (task) => task.project_id === project.id
+                  ).length;
+
+                  return (
+                    <div
+                      className="recent-project-item"
+                      key={project.id}
+                    >
+                      <div className="project-folder">
+                        📁
+                      </div>
+
+                      <div className="recent-project-info">
+                        <h3>{project.name}</h3>
+
+                        <p>
+                          {project.description ||
+                            "No description available"}
+                        </p>
+                      </div>
+
+                      <div className="recent-project-tasks">
+                        <strong>{projectTaskCount}</strong>
+
+                        <span>Tasks</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="panel overview-card">
+              <div className="panel-header">
+                <div>
+                  <h2>Task Overview</h2>
+
+                  <p>Current task distribution</p>
+                </div>
+              </div>
+
+              <div
+                className="donut-chart"
+                style={{
+                  background: `conic-gradient(
+                    #496f7d 0 ${
+                      tasks.length
+                        ? (completedTasks.length / tasks.length) * 100
+                        : 0
+                    }%,
+                    #8eafb7 ${
+                      tasks.length
+                        ? (completedTasks.length / tasks.length) * 100
+                        : 0
+                    }% ${
+                      tasks.length
+                        ? ((completedTasks.length +
+                            progressTasks.length) /
+                            tasks.length) *
+                          100
+                        : 0
+                    }%,
+                    #d9e5e7 ${
+                      tasks.length
+                        ? ((completedTasks.length +
+                            progressTasks.length) /
+                            tasks.length) *
+                          100
+                        : 0
+                    }% 100%
+                  )`,
+                }}
+              >
+                <div className="donut-center">
+                  <strong>{tasks.length}</strong>
+                  <span>Total Tasks</span>
+                </div>
+              </div>
+
+              <div className="chart-legend">
+                <div>
+                  <span className="legend-dot completed-dot"></span>
+                  Completed
+                  <strong>{completedTasks.length}</strong>
+                </div>
+
+                <div>
+                  <span className="legend-dot progress-dot"></span>
+                  In Progress
+                  <strong>{progressTasks.length}</strong>
+                </div>
+
+                <div>
+                  <span className="legend-dot pending-dot"></span>
+                  Pending
+                  <strong>{pendingTasks.length}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ================= PROJECTS =================
+
+    if (activePage === "Projects") {
+      return (
+        <>
+          <div className="page-heading">
+            <div>
+              <h1>Projects</h1>
+
+              <p>
+                Manage and organize your workspace projects.
+              </p>
+            </div>
+
+            <button
+              className="primary-button"
+              onClick={() =>
+                setShowProjectForm(!showProjectForm)
+              }
+            >
+              + New Project
+            </button>
+          </div>
+
+          {showProjectForm && (
+            <form
+              className="workspace-form"
+              onSubmit={handleCreateProject}
+            >
+              <h2>Create New Project</h2>
+
+              <input
+                type="text"
+                placeholder="Project name"
+                value={projectName}
+                onChange={(e) =>
+                  setProjectName(e.target.value)
+                }
+              />
+
+              <textarea
+                placeholder="Project description"
+                value={projectDescription}
+                onChange={(e) =>
+                  setProjectDescription(e.target.value)
+                }
+              />
+
+              <button
+                type="submit"
+                className="primary-button"
+              >
+                Create Project
+              </button>
+            </form>
           )}
 
-        {!loading &&
-          !error &&
-          projects.length > 0 && (
-            <div className="project-grid">
+          <div className="projects-list">
+            {projects.map((project) => {
+              const projectTaskCount = tasks.filter(
+                (task) => task.project_id === project.id
+              ).length;
 
-              {projects.map((project) => {
-                const projectTasks = tasks.filter(
-                  (task) =>
-                    task.project_id === project.id
-                );
-
-                return (
-                  <div
-                    className="project-card"
-                    key={project.id}
-                  >
-
-                    <div className="project-card-top">
-                      <span className="project-id">
-                        PROJECT #{project.id}
-                      </span>
-
-                      <span className="task-count">
-                        {projectTasks.length} Tasks
-                      </span>
+              return (
+                <div
+                  className="project-list-card"
+                  key={project.id}
+                >
+                  <div>
+                    <div className="project-list-icon">
+                      📁
                     </div>
 
-                    <h3>{project.name}</h3>
+                    <h2>{project.name}</h2>
 
                     <p>
                       {project.description ||
                         "No description available."}
                     </p>
 
-                    <div className="project-footer">
-                      <span>
-                        Owner ID: {project.owner_id}
-                      </span>
-
-                      <div className="project-buttons">
-                        <button
-                          className="edit-project-button"
-                          onClick={() =>
-                            startEditingProject(project)
-                          }
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          className="delete-project-button"
-                          onClick={() =>
-                            handleDeleteProject(project.id)
-                          }
-                          disabled={
-                            deletingId === project.id
-                          }
-                        >
-                          {deletingId === project.id
-                            ? "Deleting..."
-                            : "Delete"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="task-section">
-
-                      <div className="task-section-header">
-                        <h4>Tasks</h4>
-
-                        <button
-                          className="add-task-button"
-                          onClick={() => {
-                            setShowTaskForm(
-                              showTaskForm === project.id
-                                ? null
-                                : project.id
-                            );
-
-                            setEditingTask(null);
-                            setTaskError("");
-                          }}
-                        >
-                          {showTaskForm === project.id
-                            ? "Cancel"
-                            : "+ Add Task"}
-                        </button>
-                      </div>
-
-                      {showTaskForm === project.id && (
-                        <form
-                          className="task-form"
-                          onSubmit={(e) =>
-                            handleCreateTask(
-                              e,
-                              project.id
-                            )
-                          }
-                        >
-
-                          <input
-                            type="text"
-                            placeholder="Task title"
-                            value={taskTitle}
-                            onChange={(e) =>
-                              setTaskTitle(
-                                e.target.value
-                              )
-                            }
-                          />
-
-                          <textarea
-                            placeholder="Task description (optional)"
-                            value={taskDescription}
-                            onChange={(e) =>
-                              setTaskDescription(
-                                e.target.value
-                              )
-                            }
-                          />
-
-                          <select
-                            value={taskStatus}
-                            onChange={(e) =>
-                              setTaskStatus(
-                                e.target.value
-                              )
-                            }
-                          >
-                            <option value="pending">
-                              Pending
-                            </option>
-
-                            <option value="in-progress">
-                              In Progress
-                            </option>
-
-                            <option value="done">
-                              Done
-                            </option>
-                          </select>
-
-                          <button
-                            type="submit"
-                            className="save-task-button"
-                            disabled={creatingTask}
-                          >
-                            {creatingTask
-                              ? "Creating..."
-                              : "Create Task"}
-                          </button>
-
-                        </form>
-                      )}
-
-                      {taskError && (
-                        <div className="dashboard-error">
-                          {taskError}
-                        </div>
-                      )}
-
-                      {taskLoading && (
-                        <div className="task-state">
-                          Loading tasks...
-                        </div>
-                      )}
-
-                      {!taskLoading &&
-                        projectTasks.length === 0 && (
-                          <div className="task-state">
-                            No tasks yet.
-                          </div>
-                        )}
-
-                      {!taskLoading &&
-                        projectTasks.length > 0 && (
-                          <div className="task-list">
-
-                            {projectTasks.map((task) => (
-                              <div
-                                className="task-item"
-                                key={task.id}
-                              >
-
-                                {editingTask &&
-                                editingTask.id === task.id ? (
-
-                                  <form
-                                    className="task-form"
-                                    onSubmit={
-                                      handleUpdateTask
-                                    }
-                                  >
-
-                                    <input
-                                      type="text"
-                                      value={
-                                        editTaskTitle
-                                      }
-                                      onChange={(e) =>
-                                        setEditTaskTitle(
-                                          e.target.value
-                                        )
-                                      }
-                                    />
-
-                                    <textarea
-                                      value={
-                                        editTaskDescription
-                                      }
-                                      onChange={(e) =>
-                                        setEditTaskDescription(
-                                          e.target.value
-                                        )
-                                      }
-                                    />
-
-                                    <select
-                                      value={
-                                        editTaskStatus
-                                      }
-                                      onChange={(e) =>
-                                        setEditTaskStatus(
-                                          e.target.value
-                                        )
-                                      }
-                                    >
-                                      <option value="pending">
-                                        Pending
-                                      </option>
-
-                                      <option value="in-progress">
-                                        In Progress
-                                      </option>
-
-                                      <option value="done">
-                                        Done
-                                      </option>
-                                    </select>
-
-                                    <div className="form-actions">
-                                      <button
-                                        type="submit"
-                                        className="save-task-button"
-                                        disabled={
-                                          updatingTask
-                                        }
-                                      >
-                                        {updatingTask
-                                          ? "Updating..."
-                                          : "Save"}
-                                      </button>
-
-                                      <button
-                                        type="button"
-                                        className="cancel-project-button"
-                                        onClick={() =>
-                                          setEditingTask(null)
-                                        }
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-
-                                  </form>
-
-                                ) : (
-
-                                  <>
-                                    <div className="task-info">
-
-                                      <h5>
-                                        {task.title}
-                                      </h5>
-
-                                      <p>
-                                        {task.description ||
-                                          "No description"}
-                                      </p>
-
-                                      <span
-                                        className={`task-status ${task.status}`}
-                                      >
-                                        {task.status}
-                                      </span>
-
-                                      <div>
-                                        <button
-                                          className="ai-priority-button"
-                                          onClick={() =>
-                                            handleSuggestPriority(
-                                              task
-                                            )
-                                          }
-                                        >
-                                          ✨ AI Suggest Priority
-                                        </button>
-
-                                        {taskPriorities[
-                                          task.id
-                                        ] && (
-                                          <span className="ai-priority-result">
-                                            AI Priority:{" "}
-                                            {
-                                              taskPriorities[
-                                                task.id
-                                              ]
-                                            }
-                                          </span>
-                                        )}
-                                      </div>
-
-                                    </div>
-
-                                    <div className="task-buttons">
-
-                                      <button
-                                        className="edit-project-button"
-                                        onClick={() =>
-                                          startEditingTask(
-                                            task
-                                          )
-                                        }
-                                      >
-                                        Edit
-                                      </button>
-
-                                      <button
-                                        className="delete-project-button"
-                                        onClick={() =>
-                                          handleDeleteTask(
-                                            task.id
-                                          )
-                                        }
-                                        disabled={
-                                          deletingTaskId ===
-                                          task.id
-                                        }
-                                      >
-                                        {deletingTaskId ===
-                                        task.id
-                                          ? "Deleting..."
-                                          : "Delete"}
-                                      </button>
-
-                                    </div>
-
-                                  </>
-                                )}
-
-                              </div>
-                            ))}
-
-                          </div>
-                        )}
-
-                    </div>
-
+                    <span className="task-badge">
+                      {projectTaskCount} Tasks
+                    </span>
                   </div>
-                );
-              })}
 
+                  <button
+                    className="delete-button"
+                    onClick={() =>
+                      handleDeleteProject(project.id)
+                    }
+                  >
+                    Delete
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      );
+    }
+
+    // ================= TASKS =================
+
+    if (activePage === "Tasks") {
+      return (
+        <>
+          <div className="page-heading">
+            <div>
+              <h1>Tasks</h1>
+
+              <p>
+                Track and manage all your project tasks.
+              </p>
+            </div>
+
+            <button
+              className="primary-button"
+              onClick={() =>
+                setShowTaskForm(!showTaskForm)
+              }
+            >
+              + New Task
+            </button>
+          </div>
+
+          {showTaskForm && (
+            <form
+              className="workspace-form"
+              onSubmit={handleCreateTask}
+            >
+              <h2>Create New Task</h2>
+
+              <input
+                type="text"
+                placeholder="Task title"
+                value={taskTitle}
+                onChange={(e) =>
+                  setTaskTitle(e.target.value)
+                }
+              />
+
+              <textarea
+                placeholder="Task description"
+                value={taskDescription}
+                onChange={(e) =>
+                  setTaskDescription(e.target.value)
+                }
+              />
+
+              <select
+                value={selectedProject}
+                onChange={(e) =>
+                  setSelectedProject(e.target.value)
+                }
+              >
+                <option value="">
+                  Select Project
+                </option>
+
+                {projects.map((project) => (
+                  <option
+                    key={project.id}
+                    value={project.id}
+                  >
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={taskStatus}
+                onChange={(e) =>
+                  setTaskStatus(e.target.value)
+                }
+              >
+                <option value="pending">
+                  Pending
+                </option>
+
+                <option value="in-progress">
+                  In Progress
+                </option>
+
+                <option value="done">
+                  Done
+                </option>
+              </select>
+
+              <button
+                type="submit"
+                className="primary-button"
+              >
+                Create Task
+              </button>
+            </form>
+          )}
+
+          <div className="tasks-table">
+            {tasks.map((task) => {
+              const project = projects.find(
+                (item) =>
+                  item.id === task.project_id
+              );
+
+              return (
+                <div
+                  className="task-row"
+                  key={task.id}
+                >
+                  <div>
+                    <h3>{task.title}</h3>
+
+                    <p>
+                      {task.description ||
+                        "No description"}
+                    </p>
+
+                    <p>
+                      Project:{" "}
+                      {project
+                        ? project.name
+                        : "Unknown"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`status-badge ${task.status}`}
+                  >
+                    {task.status}
+                  </span>
+
+                  <button
+                    className="delete-button"
+                    onClick={() =>
+                      handleDeleteTask(task.id)
+                    }
+                  >
+                    Delete
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      );
+    }
+
+    // ================= ANALYTICS =================
+
+    if (activePage === "Analytics") {
+      return (
+        <>
+          <div className="page-heading">
+            <div>
+              <h1>Analytics</h1>
+
+              <p>
+                Track your workspace activity and task progress.
+              </p>
+            </div>
+          </div>
+
+          <div className="analytics-grid">
+            <div className="analytics-card">
+              <h2>Task Status Overview</h2>
+
+              <p>
+                Distribution of your current tasks.
+              </p>
+
+              <div className="bar-chart">
+                <div className="bar-row">
+                  <span>Completed</span>
+
+                  <div className="bar-track">
+                    <div
+                      className="bar completed-bar"
+                      style={{
+                        width: `${
+                          tasks.length
+                            ? (completedTasks.length /
+                                tasks.length) *
+                              100
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+
+                  <strong>
+                    {completedTasks.length}
+                  </strong>
+                </div>
+
+                <div className="bar-row">
+                  <span>In Progress</span>
+
+                  <div className="bar-track">
+                    <div
+                      className="bar progress-bar"
+                      style={{
+                        width: `${
+                          tasks.length
+                            ? (progressTasks.length /
+                                tasks.length) *
+                              100
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+
+                  <strong>
+                    {progressTasks.length}
+                  </strong>
+                </div>
+
+                <div className="bar-row">
+                  <span>Pending</span>
+
+                  <div className="bar-track">
+                    <div
+                      className="bar pending-bar"
+                      style={{
+                        width: `${
+                          tasks.length
+                            ? (pendingTasks.length /
+                                tasks.length) *
+                              100
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+
+                  <strong>
+                    {pendingTasks.length}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="analytics-card">
+              <h2>Workspace Summary</h2>
+
+              <p>
+                Overall project and task statistics.
+              </p>
+
+              <div className="summary-numbers">
+                <div>
+                  <strong>
+                    {projects.length}
+                  </strong>
+
+                  <span>Projects</span>
+                </div>
+
+                <div>
+                  <strong>
+                    {tasks.length}
+                  </strong>
+
+                  <span>Total Tasks</span>
+                </div>
+
+                <div>
+                  <strong>
+                    {completedTasks.length}
+                  </strong>
+
+                  <span>Completed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="analytics-card line-chart-card">
+            <div className="panel-header">
+              <div>
+                <h2>Workspace Activity</h2>
+
+                <p>
+                  Task activity overview
+                </p>
+              </div>
+
+              <span className="last-months">
+                Last 6 Months
+              </span>
+            </div>
+
+            <div className="line-chart">
+              <svg
+                viewBox="0 0 700 280"
+                preserveAspectRatio="none"
+              >
+                <line
+                  className="grid-line"
+                  x1="0"
+                  y1="40"
+                  x2="700"
+                  y2="40"
+                />
+
+                <line
+                  className="grid-line"
+                  x1="0"
+                  y1="100"
+                  x2="700"
+                  y2="100"
+                />
+
+                <line
+                  className="grid-line"
+                  x1="0"
+                  y1="160"
+                  x2="700"
+                  y2="160"
+                />
+
+                <line
+                  className="grid-line"
+                  x1="0"
+                  y1="220"
+                  x2="700"
+                  y2="220"
+                />
+
+                <polyline
+                  className="activity-line"
+                  points="
+                    20,200
+                    140,170
+                    260,190
+                    380,120
+                    500,145
+                    680,70
+                  "
+                />
+
+                <circle cx="20" cy="200" r="6" />
+                <circle cx="140" cy="170" r="6" />
+                <circle cx="260" cy="190" r="6" />
+                <circle cx="380" cy="120" r="6" />
+                <circle cx="500" cy="145" r="6" />
+                <circle cx="680" cy="70" r="6" />
+              </svg>
+
+              <div className="months">
+                <span>Mar</span>
+                <span>Apr</span>
+                <span>May</span>
+                <span>Jun</span>
+                <span>Jul</span>
+                <span>Aug</span>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ================= SETTINGS =================
+
+    return (
+      <div className="empty-state">
+        <h2>Settings</h2>
+
+        <p>
+          Workspace settings will be available here.
+        </p>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-page">
+        Loading workspace...
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-dashboard">
+
+      {/* SIDEBAR */}
+
+      <aside className="sidebar">
+
+        {/* LOGO */}
+
+        <div className="sidebar-brand">
+          <img
+            src={logo}
+            alt="DevFlow Logo"
+            className="sidebar-logo-image"
+          />
+
+          <h2>DevFlow</h2>
+        </div>
+
+        {/* MAIN MENU */}
+
+        <nav className="sidebar-menu">
+          {[
+            ["▦", "Dashboard"],
+            ["▣", "Projects"],
+            ["✓", "Tasks"],
+            ["▤", "Analytics"],
+          ].map(([icon, page]) => (
+            <button
+              key={page}
+              className={
+                activePage === page
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setActivePage(page)
+              }
+            >
+              <span>{icon}</span>
+              <span>{page}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* BOTTOM MENU */}
+
+        <div className="sidebar-bottom">
+
+          <button
+            className={
+              activePage === "Settings"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActivePage("Settings")
+            }
+          >
+            <span>⚙</span>
+            <span>Settings</span>
+          </button>
+
+          <button onClick={handleLogout}>
+            <span>↪</span>
+            <span>Logout</span>
+          </button>
+
+        </div>
+
+      </aside>
+
+      {/* MAIN */}
+
+      <div className="main-dashboard">
+
+        <header className="top-header">
+
+          <div className="top-search">
+            🔍
+
+            <input
+              placeholder="Search"
+            />
+          </div>
+
+          {/* USER PROFILE ONLY ON RIGHT */}
+
+          <div className="top-profile">
+
+            <div>
+              <strong>{username}</strong>
+              <span>Developer</span>
+            </div>
+
+            <div className="top-avatar">
+              {username.charAt(0).toUpperCase()}
+            </div>
+
+          </div>
+
+        </header>
+
+        <main className="dashboard-main-content">
+
+          {error && (
+            <div className="dashboard-alert">
+              {error}
             </div>
           )}
 
-      </main>
+          {getPageContent()}
+
+        </main>
+
+      </div>
+
     </div>
   );
 }

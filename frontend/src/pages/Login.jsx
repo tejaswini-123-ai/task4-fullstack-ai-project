@@ -14,7 +14,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8001/auth/login", {
+      const response = await fetch("http://127.0.0.1:8000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,12 +28,14 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(`Welcome back, ${data.username}!`);
+        setMessage(`Login successful! Welcome, ${data.username}`);
       } else {
         setMessage(data.detail || "Invalid email or password.");
       }
     } catch (error) {
-      setMessage("Unable to connect to the server.");
+      setMessage(
+        "Unable to connect to the backend. Please make sure FastAPI is running."
+      );
     } finally {
       setLoading(false);
     }
@@ -41,143 +43,58 @@ function Login() {
 
   return (
     <div className="login-page">
+      <div className="login-card">
 
-      {/* Decorative background */}
-      <div className="glow glow-one"></div>
-      <div className="glow glow-two"></div>
+        <form onSubmit={handleLogin}>
+          <div className="input-group">
+            <label>Email Address</label>
 
-      <div className="login-container">
-
-        {/* Left branding section */}
-        <section className="login-brand">
-
-          <div className="brand-mark">
-            N
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
 
-          <p className="brand-name">NEXORA AI</p>
+          <div className="input-group">
+            <label>Password</label>
 
-          <h1>
-            Turn ideas into
-            <span> intelligent progress.</span>
-          </h1>
-
-          <p className="brand-description">
-            A smarter workspace for managing projects, organizing tasks,
-            and using AI-powered insights to work better.
-          </p>
-
-          <div className="feature-list">
-            <div className="feature-item">
-              <span>✦</span>
-              <div>
-                <strong>Smart Workspace</strong>
-                <small>Everything organized in one place</small>
-              </div>
-            </div>
-
-            <div className="feature-item">
-              <span>◈</span>
-              <div>
-                <strong>AI Insights</strong>
-                <small>Make better task decisions faster</small>
-              </div>
-            </div>
-
-            <div className="feature-item">
-              <span>↗</span>
-              <div>
-                <strong>Track Progress</strong>
-                <small>Stay focused on what matters</small>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Login card */}
-        <section className="login-card">
-
-          <div className="login-header">
-            <p className="welcome">WELCOME BACK</p>
-
-            <h2>Sign in to NEXORA</h2>
-
-            <p>
-              Continue managing your projects and tasks.
-            </p>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
 
-          <form onSubmit={handleLogin}>
+          <button
+            type="submit"
+            className="login-button"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
 
-            <div className="input-group">
-              <label htmlFor="email">Email address</label>
-
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="input-group">
-              <div className="password-label">
-                <label htmlFor="password">Password</label>
-                <button type="button">
-                  Forgot password?
-                </button>
-              </div>
-
-              <input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              className="login-button"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign in"}
-              {!loading && <span>→</span>}
-            </button>
-
-          </form>
-
-          {message && (
-            <div
-              className={`login-message ${
-                message.includes("Welcome") ? "success" : "error"
-              }`}
-            >
-              {message}
-            </div>
-          )}
-
-          <div className="divider">
-            <span>SECURE WORKSPACE</span>
+        {message && (
+          <div
+            className={`login-message ${
+              message.includes("successful") ? "success" : "error"
+            }`}
+          >
+            {message}
           </div>
+        )}
 
-          <p className="login-footer">
-            New to NEXORA?{" "}
-            <button type="button">Create an account</button>
-          </p>
-
-        </section>
+        <p className="login-footer">
+          Don't have an account?{" "}
+          <button type="button">Create Account</button>
+        </p>
 
       </div>
-
-      <p className="copyright">
-        NEXORA AI · Intelligent Project Management
-      </p>
-
     </div>
   );
 }
