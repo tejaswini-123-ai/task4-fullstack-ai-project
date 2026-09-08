@@ -4,7 +4,11 @@ import Dashboard from "./pages/Dashboard";
 
 function App() {
   const [isSignup, setIsSignup] = useState(false);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
+  window.onpopstate = () => {
+    setCurrentPath(window.location.pathname);
+  };
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +17,7 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // SHOW DASHBOARD
-  if (window.location.pathname === "/dashboard") {
+  if (currentPath === "/dashboard") {
     return <Dashboard />;
   }
 
@@ -54,7 +58,8 @@ function App() {
         setMessage(`Login successful! Welcome, ${data.username}.`);
 
         setTimeout(() => {
-          window.location.href = "/dashboard";
+          window.history.pushState({}, "", "/dashboard");
+          setCurrentPath("/dashboard");
         }, 800);
       } else {
         setMessage(data.detail || "Invalid email or password.");
