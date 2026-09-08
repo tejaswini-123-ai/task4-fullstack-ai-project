@@ -31,7 +31,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/auth/login",
+        "https://task4-ai-backend.onrender.com/auth/login",
         {
           method: "POST",
           headers: {
@@ -82,7 +82,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/auth/register",
+        "https://task4-ai-backend.onrender.com/auth/register",
         {
           method: "POST",
           headers: {

@@ -51,11 +51,11 @@ function Dashboard() {
       setError("");
 
       const projectResponse = await fetch(
-        "http://127.0.0.1:8000/projects/"
+        "https://task4-ai-backend.onrender.com/projects/"
       );
 
       const taskResponse = await fetch(
-        "http://127.0.0.1:8000/tasks/"
+        "https://task4-ai-backend.onrender.com/tasks/"
       );
 
       const projectData = await projectResponse.json();
@@ -91,7 +91,7 @@ function Dashboard() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/projects/",
+        "https://task4-ai-backend.onrender.com/projects/",
         {
           method: "POST",
 
@@ -138,7 +138,7 @@ function Dashboard() {
 
     try {
       await fetch(
-        `http://127.0.0.1:8000/projects/${projectId}`,
+        `https://task4-ai-backend.onrender.com/projects/${projectId}`,
         {
           method: "DELETE",
         }
@@ -164,7 +164,7 @@ function Dashboard() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/tasks/",
+        "https://task4-ai-backend.onrender.com/tasks/",
         {
           method: "POST",
 
@@ -211,7 +211,7 @@ function Dashboard() {
   ) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/tasks/${task.id}`,
+        `https://task4-ai-backend.onrender.com/tasks/${task.id}`,
         {
           method: "PUT",
 
@@ -258,7 +258,7 @@ function Dashboard() {
 
     try {
       await fetch(
-        `http://127.0.0.1:8000/tasks/${taskId}`,
+        `https://task4-ai-backend.onrender.com/tasks/${taskId}`,
         {
           method: "DELETE",
         }
@@ -295,7 +295,7 @@ function Dashboard() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/ai/chat",
+        "https://task4-ai-backend.onrender.com/ai/chat",
         {
           method: "POST",
 
